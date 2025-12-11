@@ -1,8 +1,10 @@
 import config
 
 from fastapi import APIRouter, Request, Response
+from tinydb import where
 
 from core_common import core_process_request, core_prepare_response, E
+from core_database import get_db
 
 router = APIRouter(prefix="/core", tags=["facility"])
 
@@ -10,6 +12,10 @@ router = APIRouter(prefix="/core", tags=["facility"])
 @router.post("/{gameinfo}/facility/get")
 async def facility_get(request: Request):
     request_info = await core_process_request(request)
+    pcbid = request_info["root"].attrib["srcid"]
+
+    op = get_db().table("shop").get(where("pcbid") == pcbid)
+    op = {} if op is None else op
 
     response = E.response(
         E.facility(
@@ -26,7 +32,7 @@ async def facility_get(request: Request):
                 E.regionname("Tokyo", __type="str"),
                 E.countryjname("日本国", __type="str"),
                 E.regionjname("東京都", __type="str"),
-                E.name(config.arcade, __type="str"),
+                E.name(op.get("opname", config.arcade), __type="str"),
                 E("type", 255, __type="u8"),
             ),
             E.line(
@@ -42,7 +48,7 @@ async def facility_get(request: Request):
             ),
             E.public(
                 E.flag(1, __type="u8"),
-                E.name(config.arcade, __type="str"),
+                E.name(op.get("opname", config.arcade), __type="str"),
                 E.latitude(0, __type="str"),
                 E.longitude(0, __type="str"),
             ),

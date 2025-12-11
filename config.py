@@ -19,6 +19,6 @@ port = 8000
 services_prefix = "/core"
 verbose_log = True
 
-arcade = "Monkey Business"
-paseli = 5730
+arcade = "Ｍ０ＮＫＹＢＵＳ１Ｎ３Ｚ"
+paseli = 10000
 maintenance_mode = False
