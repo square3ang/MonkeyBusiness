@@ -48,8 +48,13 @@ async def forward_slashless(
                 find_response = globals()[f"ddr_{module}_{method}"]
             elif game_code == "REC":
                 find_response = globals()[f"drs_{module}_{method}"]
-            elif game_code == "KFC" and module == "eventlog":
-                find_response = globals()[f"sdvx_{module}_{method}"]
+            elif game_code == "KFC":
+                if module == "eventlog":
+                    find_response = globals()[f"sdvx_{module}_{method}"]
+                else:
+                    sdvx_ver = "".join(filter(str.isdigit, method))
+                    find_response = globals()[f"{module}_{"".join([i for i in method if not i.isdigit()])}"]
+                    return await find_response(sdvx_ver, request)
             elif game_code == "M32":
                 if module == "lobby":
                     find_response = globals()[f"gitadora_{module}_{method}"]

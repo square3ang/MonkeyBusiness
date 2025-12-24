@@ -35,8 +35,8 @@ def get_id_from_profile(cid):
     return profile["sdvx_id"], djid_split
 
 
-@router.post("/{gameinfo}/game/sv6_common")
-async def game_sv6_common(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_common")
+async def game_sv_common(ver: str, request: Request):
     request_info = await core_process_request(request)
 
     event = [
@@ -128,7 +128,7 @@ async def game_sv6_common(request: Request):
                 break
 
     if unlock == []:
-        for i in range(2310):
+        for i in range(2400):
             for j in range(0, 5):
                 unlock.append([i, j])
 
@@ -160,8 +160,8 @@ async def game_sv6_common(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_new")
-async def game_sv6_new(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_new")
+async def game_sv_new(ver: str, request: Request):
     request_info = await core_process_request(request)
     game_version = request_info["game_version"]
 
@@ -233,8 +233,8 @@ async def game_sv6_new(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_load")
-async def game_sv6_load(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_load")
+async def game_sv_load(ver: str, request: Request):
     request_info = await core_process_request(request)
     game_version = request_info["game_version"]
 
@@ -401,8 +401,8 @@ async def game_sv6_load(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_load_m")
-async def game_sv6_load_m(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_load_m")
+async def game_sv_load_m(ver: str, request: Request):
     request_info = await core_process_request(request)
     game_version = request_info["game_version"]
 
@@ -437,9 +437,12 @@ async def game_sv6_load_m(request: Request):
                 0,
                 0,
                 0,
-                0,
+                0
             ]
         )
+
+        if int(ver) == 7:
+            best_scores[-1].extend([0, 0, 0, 0, 0])
 
     response = E.response(
         E.game(
@@ -458,8 +461,8 @@ async def game_sv6_load_m(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_save")
-async def game_sv6_save(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_save")
+async def game_sv_save(ver: str, request: Request):
     request_info = await core_process_request(request)
     game_version = request_info["game_version"]
 
@@ -589,8 +592,8 @@ async def game_sv6_save(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_save_m")
-async def game_sv6_save_m(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_save_m")
+async def game_sv_save_m(ver: str, request: Request):
     request_info = await core_process_request(request)
     game_version = request_info["game_version"]
 
@@ -700,8 +703,8 @@ async def game_sv6_save_m(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_hiscore")
-async def game_sv6_hiscore(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_hiscore")
+async def game_sv_hiscore(ver: str, request: Request):
     request_info = await core_process_request(request)
     game_version = request_info["game_version"]
 
@@ -744,8 +747,8 @@ async def game_sv6_hiscore(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_lounge")
-async def game_sv6_lounge(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_lounge")
+async def game_sv_lounge(ver: str, request: Request):
     request_info = await core_process_request(request)
 
     response = E.response(
@@ -756,8 +759,8 @@ async def game_sv6_lounge(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_shop")
-async def game_sv6_shop(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_shop")
+async def game_sv_shop(ver: str, request: Request):
     request_info = await core_process_request(request)
 
     response = E.response(
@@ -768,8 +771,8 @@ async def game_sv6_shop(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_load_r")
-async def game_sv6_load_r(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_load_r")
+async def game_sv_load_r(ver: str, request: Request):
     request_info = await core_process_request(request)
 
     response = E.response(
@@ -780,8 +783,8 @@ async def game_sv6_load_r(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_frozen")
-async def game_sv6_frozen(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_frozen")
+async def game_sv_frozen(ver: str, request: Request):
     request_info = await core_process_request(request)
 
     response = E.response(
@@ -792,8 +795,8 @@ async def game_sv6_frozen(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_save_e")
-async def game_sv6_save_e(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_save_e")
+async def game_sv_save_e(ver: str, request: Request):
     request_info = await core_process_request(request)
 
     response = E.response(
@@ -804,8 +807,8 @@ async def game_sv6_save_e(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_save_mega")
-async def game_sv6_save_mega(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_save_mega")
+async def game_sv_save_mega(ver: str, request: Request):
     request_info = await core_process_request(request)
 
     response = E.response(
@@ -816,8 +819,8 @@ async def game_sv6_save_mega(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_play_e")
-async def game_sv6_play_e(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_play_e")
+async def game_sv_play_e(ver: str, request: Request):
     request_info = await core_process_request(request)
 
     response = E.response(
@@ -828,8 +831,8 @@ async def game_sv6_play_e(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_play_s")
-async def game_sv6_play_s(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_play_s")
+async def game_sv_play_s(ver: str, request: Request):
     request_info = await core_process_request(request)
 
     response = E.response(
@@ -840,8 +843,8 @@ async def game_sv6_play_s(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_entry_s")
-async def game_sv6_entry_s(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_entry_s")
+async def game_sv_entry_s(ver: str, request: Request):
     request_info = await core_process_request(request)
 
     response = E.response(
@@ -852,8 +855,8 @@ async def game_sv6_entry_s(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_entry_e")
-async def game_sv6_entry_e(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_entry_e")
+async def game_sv_entry_e(ver: str, request: Request):
     request_info = await core_process_request(request)
 
     response = E.response(
@@ -864,8 +867,8 @@ async def game_sv6_entry_e(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 
-@router.post("/{gameinfo}/game/sv6_log")
-async def game_sv6_log(request: Request):
+@router.post("/{gameinfo}/game/sv{ver}_log")
+async def game_sv_log(ver: str, request: Request):
     request_info = await core_process_request(request)
 
     response = E.response(
