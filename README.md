@@ -15,6 +15,7 @@ Run [start.bat (Windows)](start.bat) or [start.sh (Linux, MacOS)](start.sh)
 - DRS
 - NOST 3
 - SDVX 6-7
+- Polaris Chord
 
 **Note**: Playable means settings/scores *should* save and load. Events are not implemented.
 
