@@ -683,113 +683,122 @@ async def polaris_usr_save(request: Request):
     return Response(content=response_body, headers=response_headers)
 
 async def polaris_usr_get_usr_music(request: Request):
-    request_info = await core_process_request(request)
-    root = request_info["root"][0]
-    usr_id = int(root.find("usr_id").text)
-    
-    db = get_db().table("polaris_score")
-    scores = db.search(where("usr_id") == usr_id)
-    
-    # We only want the best score per music_id (or all? usually best)
-    # But usually the game requests all logs or summary.
-    # Let's return all entries for now, or maybe aggregate?
-    # Simple approach: Return all saved logs.
-    
-    music_logs = []
-    for s in scores:
-        music_logs.append(
-            E.music(
-                E.music_id(s["music_id"], __type="s32"),
-                E.score(s["score"], __type="s32"),
-                E.clear_status(s["clear_status"], __type="s32"),
-                E.combo(s["combo"], __type="s32"),
-                # Add default values for required fields to prevent client errors
-                E.chart_difficulty_type(0, __type="s32"),
-                E.end_reason(0, __type="s32"),
-                E.retry_count(0, __type="s32"),
-                E.perfect(0, __type="s32"),
-                E.great(0, __type="s32"),
-                E.good(0, __type="s32"),
-                E.bad(0, __type="s32"),
-                E.miss(0, __type="s32"),
-                E.achievement_rate(0, __type="s32"),
-                E.score_rank(0, __type="s32"),
-                E.combo_rank(0, __type="s32"),
-                E.audience_start(0, __type="s32"),
-                E.audience_end(0, __type="s32"),
-                E.frame_id("", __type="str"),
-                E.pose_id("", __type="str"),
-                E.fps_min(0, __type="s32"),
-                E.fps_50(0, __type="s32"),
-                E.fps_90(0, __type="s32"),
-                E.fps_95(0, __type="s32"),
-                E.fps_99(0, __type="s32"),
-                E.fps_ave(0, __type="s32"),
-                E.mode_id(0, __type="s32"),
-                E.stage_no(0, __type="s32"),
-                E.loc_id("", __type="str"),
-                E.shopname("", __type="str"),
-                E.music_select_total_time(0, __type="s16"),
-                E.music_select_used_time(0, __type="s16"),
-                E.music_select_remain_time(0, __type="s16"),
-                E.music_category("", __type="str"),
+    try:
+        request_info = await core_process_request(request)
+        root = request_info["root"][0]
+        usr_id = int(root.find("usr_id").text)
+        
+        db = get_db().table("polaris_score")
+        scores = db.search(where("usr_id") == usr_id)
+        
+        # Aggregate scores to find the best per (music_id, difficulty)
+        best_scores = {}
+        for s in scores:
+            mid = s.get("music_id")
+            diff = s.get("difficulty", 0)
+            key = (mid, diff)
+            
+            if key not in best_scores:
+                best_scores[key] = {
+                    "music_id": mid,
+                    "difficulty": diff,
+                    "score": s.get("score", 0),
+                    "achievement_rate": s.get("achievement_rate", 0),
+                    "clear_status": s.get("clear_status", 0),
+                    "combo": s.get("combo", 0),
+                    "score_rank": s.get("score_rank", 0),
+                    "combo_rank": s.get("combo_rank", 0),
+                    "play_count": 1,
+                    "clear_count": 1 if s.get("clear_status", 0) >= 10 else 0, # Assuming >=10 is clear
+                }
+            else:
+                entry = best_scores[key]
+                entry["score"] = max(entry["score"], s.get("score", 0))
+                entry["achievement_rate"] = max(entry["achievement_rate"], s.get("achievement_rate", 0))
+                entry["clear_status"] = max(entry["clear_status"], s.get("clear_status", 0))
+                entry["combo"] = max(entry["combo"], s.get("combo", 0))
+                entry["score_rank"] = max(entry["score_rank"], s.get("score_rank", 0))
+                entry["combo_rank"] = max(entry["combo_rank"], s.get("combo_rank", 0))
+                entry["play_count"] += 1
+                if s.get("clear_status", 0) >= 10:
+                    entry["clear_count"] += 1
+
+        music_logs = []
+        for key, val in best_scores.items():
+            music_logs.append(
+                E.music(
+                    E.music_id(val["music_id"], __type="s32"),
+                    E.chart_difficulty_type(val["difficulty"], __type="s32"),
+                    E.achievement_rate(val["achievement_rate"], __type="s32"),
+                    E.highscore(val["score"], __type="s32"),
+                    E.score_rank(val["score_rank"], __type="s32"),
+                    E.maxcombo(val["combo"], __type="s32"),
+                    E.combo_rank(val["combo_rank"], __type="s32"),
+                    E.clear_status(val["clear_status"], __type="s32"),
+                    E.play_count(val["play_count"], __type="s32"),
+                    E.clear_count(val["clear_count"], __type="s32"),
+                    E.perfect_clear_count(0, __type="s32"),
+                    E.full_combo_count(0, __type="s32"),
+                )
+            )
+
+        response = E.response(
+            E.usr(
+                 E.usr_music_highscore(*music_logs)
             )
         )
-
-    response = E.response(
-        E.usr(
-             E.now_date(time.strftime("%Y-%m-%d %H:%M:%S"), __type="str"),
-             E.usr_music_play_log(*music_logs)
-        )
-    )
-    response_body, response_headers = await core_prepare_response(request, response)
-    return Response(content=response_body, headers=response_headers)
+        response_body, response_headers = await core_prepare_response(request, response)
+        return Response(content=response_body, headers=response_headers)
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return Response(status_code=500)
 
 async def polaris_usr_save_musicscore(request: Request):
-    request_info = await core_process_request(request)
-    root = request_info["root"][0]
-    
     try:
+        request_info = await core_process_request(request)
+        root = request_info["root"][0]
         usr_id = int(root.find("usr_id").text)
         
         logs = root.find("usr_music_play_log")
         if logs is not None:
             db = get_db().table("polaris_score")
             for log in logs.findall("music"):
-                # Helper to safely get int text
-                def get_int(tag, default=0):
-                    node = log.find(tag)
-                    return int(node.text) if node is not None and node.text else default
-
-                music_id = get_int("music_id")
-                score = get_int("score")
-                clear_status = get_int("clear_status")
-                combo = get_int("combo")
+                def gi(t):
+                    n = log.find(t)
+                    return int(n.text) if n is not None and n.text else 0
                 
-                # We can extract more if needed
+                mid = gi("music_id")
+                diff = gi("chart_difficulty_type")
+                score = gi("score")
                 
                 score_data = {
                     "usr_id": usr_id,
-                    "music_id": music_id,
+                    "music_id": mid,
+                    "difficulty": diff,
                     "score": score,
-                    "clear_status": clear_status,
-                    "combo": combo,
+                    "clear_status": gi("clear_status"),
+                    "combo": gi("combo"),
+                    "achievement_rate": gi("achievement_rate"),
+                    "score_rank": gi("score_rank"),
+                    "combo_rank": gi("combo_rank"),
                     "timestamp": int(time.time())
                 }
+                
                 db.insert(score_data)
-                print(f"polaris_usr_save_musicscore: Saved score for music {music_id}: {score}")
+                print(f"polaris_usr_save_musicscore: Saved music {mid} (diff {diff}) score {score}")
 
         response = E.response(
             E.usr(
                 E.now_date(time.strftime("%Y-%m-%d %H:%M:%S"), __type="str")
             )
         )
+        response_body, response_headers = await core_prepare_response(request, response)
+        return Response(content=response_body, headers=response_headers)
     except Exception as e:
-        print(f"polaris_usr_save_musicscore: Error {e}")
-        response = E.response(E.usr(E.result(1, __type="s32"))) # Error
-
-    response_body, response_headers = await core_prepare_response(request, response)
-    return Response(content=response_body, headers=response_headers)
+        import traceback
+        print(traceback.format_exc())
+        return Response(status_code=500)
 
 async def polaris_usr_checkin(request: Request):
     request_info = await core_process_request(request)
